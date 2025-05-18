@@ -1,4 +1,7 @@
 import pygame
+import os
+
+IMAGES = {}  
 
 SQUARE_SIZE = 200  
 BOARD_SIZE = 8 * SQUARE_SIZE
@@ -9,13 +12,35 @@ status_font = None
 piece_colors = {"p": "white", "r": "white", "n": "white", "b": "white", "q": "white", "k": "white",
                 "P": "black", "R": "black", "N": "black", "B": "black", "Q": "black", "K": "black"}
 
+def load_chess_images():
+    """Load all chess piece images"""
+    global IMAGES
+    pieces = ['wp', 'wR', 'wN', 'wB', 'wK', 'wQ', 'bp', 'bR', 'bN', 'bB', 'bK', 'bQ']
+    for piece in pieces:
+        try:
+            img_path = os.path.join("images", piece + ".png")
+            print(f"Loading image: {img_path}")
+            image = pygame.image.load(img_path)
+            IMAGES[piece] = pygame.transform.scale(image, (SQUARE_SIZE, SQUARE_SIZE))
+        except pygame.error as e:
+            print(f"Error loading {piece}.png: {e}")
+            IMAGES[piece] = None  # Set to None to indicate failed loading
+    
+    print(f"Loaded {len(IMAGES)} images: {list(IMAGES.keys())}")
+
 def init_transparent_display():
     global screen, piece_font, status_font
     pygame.init()
     # Create a surface without opening a window
-    screen = pygame.Surface((BOARD_SIZE, BOARD_SIZE), pygame.SRCALPHA)
+    screen_height = BOARD_SIZE + 250 
+    screen_width = BOARD_SIZE
+    screen = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
     piece_font = pygame.font.Font(None, 120)
     status_font = pygame.font.Font(None, 60)
+    
+    # Load images during initialization
+    load_chess_images()
+    
     return screen   
 
 def draw_transparent_board(screen, board, valid_moves=None, in_check=False, king_pos=None):
@@ -37,15 +62,27 @@ def draw_transparent_board(screen, board, valid_moves=None, in_check=False, king
                                            row * SQUARE_SIZE + SQUARE_SIZE // 2), 
                                           SQUARE_SIZE // 4)
             
-            # Draw pieces
+            # Draw pieces using images
             piece = board[row][col]
             if piece:
-                piece_color = piece_colors[piece]
-                text_color = (0, 0, 0) if piece_color == "white" else (255, 255, 255)
-                text = piece_font.render(piece, True, text_color)
-                text_rect = text.get_rect(center=(col * SQUARE_SIZE + SQUARE_SIZE // 2, row * SQUARE_SIZE + SQUARE_SIZE // 2))
-                screen.blit(text, text_rect)
-    
+                # Convert piece notation to image key
+                if piece.islower():  # Black pieces
+                    piece_type = piece.upper() if piece != 'p' else 'p'  # Keep pawn lowercase
+                    img_key = "b" + piece_type
+                else:  # White pieces
+                    piece_type = piece if piece != 'P' else 'p'  # Keep pawn lowercase
+                    img_key = "w" + piece_type
+                
+                # Get the image from main's IMAGES dictionary
+                if img_key in IMAGES:
+                    piece_img = IMAGES[img_key]
+                    # Position the image correctly on the board
+                    piece_rect = piece_img.get_rect(center=(
+                        col * SQUARE_SIZE + SQUARE_SIZE // 2,
+                        row * SQUARE_SIZE + SQUARE_SIZE // 2
+                    ))
+                    screen.blit(piece_img, piece_rect)
+
     # Highlight king if in check
     if in_check and king_pos:
         king_row, king_col = king_pos
@@ -82,37 +119,28 @@ def draw_game_status(screen, checkmate=False, stalemate=False, white_to_move=Tru
         screen.blit(think_surface, (BOARD_SIZE - think_surface.get_width() - 20, 15))
 
 def draw_transparent_dragging_piece(screen, piece, center):
-    if piece and piece in piece_colors:
-        piece_color = piece_colors[piece]
-        # Create a properly sized surface for the dragged piece
-        text_surface = pygame.Surface((SQUARE_SIZE, SQUARE_SIZE), pygame.SRCALPHA)
-        
-        # Add a glow/halo effect for all pieces
-        if piece_color == "black":
-            glow_color = (255, 255, 255, 120)  # Semi-transparent white for black pieces
-            text_color = (255, 255, 255)  # Pure white for better contrast
-        else:
-            glow_color = (200, 200, 255, 120)  # Light blue glow for white pieces
-            text_color = (0, 0, 0)  # Black text for white pieces
+    if piece:
+        # Convert piece to image key
+        if piece.islower():  # Black pieces
+            piece_type = piece.upper() if piece != 'p' else 'p'
+            img_key = "b" + piece_type
+        else:  # White pieces
+            piece_type = piece if piece != 'P' else 'p'
+            img_key = "w" + piece_type
             
-        # Draw the glow effect for all pieces
-        pygame.draw.circle(text_surface, glow_color, 
-                          (SQUARE_SIZE // 2, SQUARE_SIZE // 2), 
-                          SQUARE_SIZE // 3)
-        
-        # Render the piece character
-        text = piece_font.render(piece, True, text_color)
-        text_rect = text.get_rect(center=(SQUARE_SIZE // 2, SQUARE_SIZE // 2))
-        
-        # For all pieces, add a slight shadow for depth
-        shadow = piece_font.render(piece, True, (50, 50, 50, 180))
-        shadow_rect = shadow.get_rect(center=(SQUARE_SIZE // 2 + 3, SQUARE_SIZE // 2 + 3))
-        text_surface.blit(shadow, shadow_rect)
-        text_surface.blit(text, text_rect)
-        
-        # Position directly at the cursor position
-        dest_rect = text_surface.get_rect(center=center)
-        screen.blit(text_surface, dest_rect)
+        # Get the image from the main module
+        if img_key in IMAGES:
+            piece_img = IMAGES[img_key]
+            # Add glow effect
+            glow_surface = pygame.Surface((SQUARE_SIZE, SQUARE_SIZE), pygame.SRCALPHA)
+            pygame.draw.circle(glow_surface, (255, 255, 255, 80), 
+                             (SQUARE_SIZE // 2, SQUARE_SIZE // 2), 
+                             SQUARE_SIZE // 2.5)
+            
+            # Position the image at the cursor
+            piece_rect = piece_img.get_rect(center=center)
+            screen.blit(glow_surface, (piece_rect.x, piece_rect.y))
+            screen.blit(piece_img, piece_rect)
 
 def screen_to_board(x, y):
     col = x // SQUARE_SIZE

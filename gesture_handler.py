@@ -9,7 +9,7 @@ hands = mp_hands.Hands(static_image_mode=False,
                       min_tracking_confidence=0.7)
 mp_drawing = mp.solutions.drawing_utils
 
-PINCH_THRESHOLD = 0.1
+PINCH_THRESHOLD = 0.05
 
 def detect_hands(image_rgb):
     return hands.process(image_rgb)

@@ -29,6 +29,8 @@ screen = init_transparent_display()
 if screen is None:
     print("Error initializing display")
     exit()
+    
+
 clock = pygame.time.Clock()
 
 # Game state
@@ -152,7 +154,7 @@ while running:
     pygame_image_bgr = cv2.resize(pygame_image_bgr, (camera_width, camera_height))
     
     # Adjust alpha blending for better visibility
-    alpha = 0.6  # Increased from 0.5 for better visibility of chess pieces
+    alpha = 0.4
     overlayed_image = cv2.addWeighted(camera_feed, 1 - alpha, pygame_image_bgr, alpha, 0)
 
     # Display game status as text on the camera feed
@@ -171,13 +173,13 @@ while running:
     # Add instructions text to the display
     instructions = "Press 'A' to toggle AI opponent | Press 'Q' to quit"
     font = cv2.FONT_HERSHEY_SIMPLEX
-    cv2.putText(overlayed_image, instructions, (10, camera_height - 20), 
+    cv2.putText(overlayed_image, instructions, (10, camera_height - 15), 
                font, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
 
     if is_ai_enabled():
         ai_status = "AI: ON (playing as Black)" 
-        cv2.putText(overlayed_image, ai_status, (10, camera_height - 50), 
-                   font, 0.6, (50, 200, 50), 2, cv2.LINE_AA)
+        cv2.putText(overlayed_image, ai_status, (10, camera_height - 40), 
+                   font, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
 
     cv2.imshow('Virtual Chess', overlayed_image)
     key = cv2.waitKey(1) & 0xFF
