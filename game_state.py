@@ -2,6 +2,7 @@ from chess_engine import GameState, Move
 import threading
 import queue
 from chess_ai import findBestMove
+import time
 
 # Initialize the chess engine
 chess_engine = GameState()
@@ -189,6 +190,7 @@ def request_ai_move():
 
 def make_ai_move():
     global ai_thinking
+    time.sleep(5)  
     if ai_thinking:
         ai_move = get_ai_move()
         if ai_move:

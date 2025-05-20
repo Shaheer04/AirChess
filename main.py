@@ -9,6 +9,7 @@ from game_state import (
     toggle_ai, is_ai_enabled, is_ai_thinking, 
     request_ai_move, make_ai_move
 )
+import time
 
 # OpenCV setup
 cap = cv2.VideoCapture(0)
@@ -119,7 +120,7 @@ while running:
         
         # Apply scaling and offset
         board_x = pinch_location_pygame[0] * scale_x
-        board_y = pinch_location_pygame[1] * scale_y
+        board_y = pinch_location_pygame[1] * scale_y + 40
 
         adjusted_pinch_location = (board_x, board_y)
     else:
@@ -181,7 +182,7 @@ while running:
         cv2.putText(overlayed_image, ai_status, (10, camera_height - 40), 
                    font, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
 
-    cv2.imshow('Virtual Chess', overlayed_image)
+    cv2.imshow('Air Chess', overlayed_image)
     key = cv2.waitKey(1) & 0xFF
     if key == ord('q'):
         break
